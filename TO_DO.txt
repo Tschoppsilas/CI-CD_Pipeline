@@ -1,0 +1,3 @@
+1. Im environment.yml den Venv Name anpassen
+2. Requirements.txt anpassen
+3. README überarbeiten
