@@ -1,0 +1,67 @@
+name: Python Pipeline CI
+
+# 1. TRIGGER: Automatische CI für Feature-Branches, develop und Merge Requests
+on:
+  push:
+    branches: [ "main", "develop", "feature/*" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Installiert alle nötigen Pakete für die Pipeline und die Tests
+        pip install pandas geopandas pytest pyarrow fastparquet flake8 black
+
+    # 2. STATISCHE CODE ANALYSE (Linting)
+    - name: Lint with black & flake8
+      run: |
+        # Black prüft das Format (PEP8), flake8 prüft die Code-Logik
+        black --check .
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    # 3. UNIT TESTS
+    - name: Run Unit Tests with pytest
+      env:
+        # Erklärt dem Runner, wo dein Code im Ordner "Python" liegt
+        PYTHONPATH: ${{ github.workspace }}/Python
+      run: |
+        pytest tests/ -v
+
+    # 4. NOTIFICATIONS (Status-Update in die Konsole)
+    - name: Pipeline Status Notification
+      if: always()
+      run: |
+        echo "Pipeline-Status: ${{ job.status }}"
+
+    # 5. SPEICHERN DER ARTEFAKTE (Logs)
+    - name: Upload Pipeline Logs
+      if: always() # Logs werden auch hochgeladen, wenn die Tests fehlschlagen
+      uses: actions/upload-artifact@v4
+      with:
+        name: pipeline-logs
+        path: logs/
+        retention-days: 5
+
+    # 6. SPEICHERN DER ARTEFAKTE (Prozessierte Daten)
+    - name: Upload Processed Data
+      if: success() # Daten werden nur bei erfolgreichem Durchlauf gespeichert
+      uses: actions/upload-artifact@v4
+      with:
+        name: processed-data-parquet
+        path: Data/
+        retention-days: 5

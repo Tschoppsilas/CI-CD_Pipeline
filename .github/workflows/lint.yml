@@ -1,0 +1,28 @@
+name: Lint Python
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          pip install black flake8 nbqa
+          pip install -r requirements.txt
+      - name: Lint Python files
+        run: |
+          if find . -name "*.py" -not -path "./.*" -type f | grep -q .; then
+            black --check .
+            flake8 .
+          else
+            echo "No Python files to lint"
+          fi
+      - name: Lint Notebooks
+        run: |
+          nbqa black --check Notebooks/
+          nbqa flake8 Notebooks/

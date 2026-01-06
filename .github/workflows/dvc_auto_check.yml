@@ -1,0 +1,39 @@
+name: DVC Auto-Check
+
+on:
+  push:
+    branches:
+      - develop
+      - feature/*
+
+jobs:
+  dvc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Für Git-History
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          pip install dvc dvc-gdrive  # oder dvc-s3, je nach Remote
+          pip install -r requirements.txt
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Setup DVC Remote
+        run: |
+          # DVC Remote konfigurieren (anpassen an deinen Storage)
+          # z.B. für Google Drive:
+          # dvc remote modify origin --local gdrive_use_service_account true
+          echo "DVC remote setup needed"
+
+      - name: Run DVC auto-add
+        run: bash scripts/dvc_auto_add.sh

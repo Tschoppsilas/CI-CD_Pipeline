@@ -1,0 +1,12 @@
+name: SKO_Uebung_1
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.13
+  - pandas
+  - black
+  - flake8
+  - pylint
+  - matplotlib
+prefix: C:\Users\silas\miniconda3\envs\SKO_Uebung_1
