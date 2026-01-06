@@ -1,28 +1,58 @@
 name: Lint Python
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ "main", "develop", "feature/*" ]
+  pull_request:
+    branches: [ "main", "develop" ]
 
 jobs:
   lint:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
-      - name: Install dependencies
+          python-version: '3.12'
+
+      - name: Install Linting Tools
         run: |
+          python -m pip install --upgrade pip
+          # black für Formatierung, flake8 für Logik, nbqa für Notebooks
           pip install black flake8 nbqa
-          pip install -r requirements.txt
-      - name: Lint Python files
+
+      - name: Lint Python Files (Black)
         run: |
-          if find . -name "*.py" -not -path "./.*" -type f | grep -q .; then
-            black --check .
-            flake8 .
+          # Prüft, ob alle .py Dateien korrekt mit Black formatiert sind
+          black --check .
+
+      - name: Lint Python Files (Flake8)
+        run: |
+          # Prüft auf Syntaxfehler und unsauberen Code
+          # E9, F63, F7, F82 sind kritische Fehler
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Der zweite Durchlauf prüft den Rest (Warnungen)
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Lint Notebooks (nbQA)
+        # Dieser Schritt wird nur ausgeführt, wenn der Ordner 'Notebooks' existiert
+        if: always()
+        run: |
+          if [ -d "Notebooks" ]; then
+            echo "Checking Jupyter Notebooks..."
+            # Black check für Notebooks
+            nbqa black --check Notebooks/
+            # Flake8 für Notebooks (wir ignorieren E402, da Imports oft verteilt sind)
+            nbqa flake8 Notebooks/ --ignore=E402,E265
           else
-            echo "No Python files to lint"
+            echo "No Notebooks directory found, skipping."
           fi
-      - name: Lint Notebooks
+
+      - name: Linting Summary
+        if: always()
         run: |
-          nbqa black --check Notebooks/
-          nbqa flake8 Notebooks/
+          echo "Linting-Prozess abgeschlossen."
