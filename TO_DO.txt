@@ -1,3 +1,4 @@
-1. Im environment.yml den Venv Name anpassen
-2. Requirements.txt anpassen
-3. README überarbeiten
+1. pip install black unf flake8
+2. Im environment.yml den Venv Name anpassen
+3. Requirements.txt anpassen
+4. README überarbeiten
